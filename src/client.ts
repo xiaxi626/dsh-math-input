@@ -1,7 +1,1 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-
-export const inject: string[] = []
-
-export async function apply(_ctx: ClientContext): Promise<() => Promise<void>> {
-  return async () => undefined
-}
+export { apply, inject } from './client/index.js'

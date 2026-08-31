@@ -25,8 +25,13 @@ npm test            # 通过 tsx 使用 Node.js 测试运行器执行测试
 
 ## 拉取请求要求
 
-- 保持改动聚焦：一个拉取请求只处理一件事。
-- 提交前确保 `npm run typecheck`、`npm run build`、`npm run lint` 全部通过。
-- 在可行的情况下，为行为变更在 `test/` 下补充或更新测试。
-- 当用户可见行为发生变化时，请在 `CHANGELOG.md` 的 unreleased 条目中更新。
-- 面向用户的文案必须通过 locale 文件实现本地化，不要硬编码。
+* 保持改动聚焦：一个拉取请求只处理一件事。
+
+* 提交前确保 `npm run typecheck`、`npm run build`、`npm run lint` 全部通过。
+
+* 在可行的情况下，为行为变更在 `test/` 下补充或更新测试。
+
+* 当用户可见行为发生变化时，请在 `CHANGELOG.md` 的 unreleased 条目中更新。
+
+* 面向用户的文案必须通过 locale 文件实现本地化，不要硬编码。
+
