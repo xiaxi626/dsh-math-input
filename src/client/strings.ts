@@ -34,6 +34,7 @@ export type MathInputStrings = {
   ocrTitle: string
   ocrPasteHint: string
   ocrUpload: string
+  ocrWarning: string
   editorTitle: string
   editorInsert: string
   previewTitle: string
@@ -82,6 +83,7 @@ export const zh: MathInputStrings = {
   ocrTitle: '截图识别',
   ocrPasteHint: 'Ctrl+V 粘贴图片,或上传文件',
   ocrUpload: '上传文件',
+  ocrWarning: '识别结果可能不准确,请手动修正',
   editorTitle: 'LaTeX 编辑器',
   editorInsert: '插入',
   previewTitle: '预览',
@@ -122,6 +124,7 @@ export const en: MathInputStrings = {
   ocrTitle: 'Screenshot OCR',
   ocrPasteHint: 'Paste with Ctrl+V, or upload a file',
   ocrUpload: 'Upload file',
+  ocrWarning: 'Recognition may be inaccurate — please edit manually',
   editorTitle: 'LaTeX editor',
   editorInsert: 'Insert',
   previewTitle: 'Preview',

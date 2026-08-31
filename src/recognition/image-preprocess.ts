@@ -48,6 +48,55 @@ export function invert(values: Float32Array): Float32Array {
   return out
 }
 
+export function normalizeContrast(values: Float32Array): Float32Array {
+  let min = Infinity
+  let max = -Infinity
+  for (let i = 0; i < values.length; i += 1) {
+    const v = values[i] ?? 0
+    if (v < min) min = v
+    if (v > max) max = v
+  }
+  const range = max - min
+  if (range < 0.01) return new Float32Array(values.length)
+  const out = new Float32Array(values.length)
+  for (let i = 0; i < values.length; i += 1) {
+    out[i] = ((values[i] ?? 0) - min) / range
+  }
+  return out
+}
+
+function trimWhitespace(values: Float32Array, width: number, height: number, threshold = 0.02): { values: Float32Array, width: number, height: number } {
+  let minX = width
+  let minY = height
+  let maxX = -1
+  let maxY = -1
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if ((values[y * width + x] ?? 0) > threshold) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  if (maxX < 0) return { values, width, height }
+  const pad = 8
+  minX = Math.max(0, minX - pad)
+  minY = Math.max(0, minY - pad)
+  maxX = Math.min(width - 1, maxX + pad)
+  maxY = Math.min(height - 1, maxY + pad)
+  const cw = maxX - minX + 1
+  const ch = maxY - minY + 1
+  const out = new Float32Array(cw * ch)
+  for (let y = 0; y < ch; y += 1) {
+    for (let x = 0; x < cw; x += 1) {
+      out[y * cw + x] = values[(minY + y) * width + (minX + x)] ?? 0
+    }
+  }
+  return { values: out, width: cw, height: ch }
+}
+
 export function scaleToHeight(values: Float32Array, width: number, height: number, targetHeight: number): GrayImage {
   const targetWidth = Math.max(1, Math.round((width / height) * targetHeight))
   const out = new Float32Array(targetWidth * targetHeight)
@@ -109,7 +158,9 @@ function scaleToHeightClamped(values: Float32Array, width: number, height: numbe
 export function imageToTensor(image: ImageLike): TensorInput {
   const gray = toGrayscaleFloat(image)
   const inked = invert(gray)
-  const scaled = scaleToHeightClamped(inked, image.width, image.height, TARGET_H, MAX_W)
+  const normalized = normalizeContrast(inked)
+  const trimmed = trimWhitespace(normalized, image.width, image.height)
+  const scaled = scaleToHeightClamped(trimmed.values, trimmed.width, trimmed.height, TARGET_H, MAX_W)
   const canvasW = Math.min(MAX_W, Math.max(MIN_W, Math.ceil((scaled.width + PAD) / W_ALIGN) * W_ALIGN))
   const tensor = new Float32Array(MODEL_H * canvasW)
   for (let y = 0; y < scaled.height; y += 1) {
@@ -126,14 +177,15 @@ export function imageToTensor(image: ImageLike): TensorInput {
   return { tensor, height: MODEL_H, width: canvasW, mask, maskHeight: MODEL_H, maskWidth: canvasW }
 }
 
-export function splitIntoLines(image: ImageLike, gapThreshold = 3): ImageLike[] {
+export function splitIntoLines(image: ImageLike, gapThreshold = 5): ImageLike[] {
   const gray = toGrayscaleFloat(image)
   const inked = invert(gray)
+  const normalized = normalizeContrast(inked)
   const rowSums = new Float32Array(image.height)
   for (let y = 0; y < image.height; y += 1) {
     let sum = 0
     for (let x = 0; x < image.width; x += 1) {
-      sum += inked[y * image.width + x] ?? 0
+      sum += normalized[y * image.width + x] ?? 0
     }
     rowSums[y] = sum
   }
@@ -153,15 +205,17 @@ export function splitIntoLines(image: ImageLike, gapThreshold = 3): ImageLike[] 
         const end = y - gapCount
         if (end >= start) {
           const h = end - start + 1
-          const data = new Uint8ClampedArray(image.width * h * 4)
-          for (let row = 0; row < h; row += 1) {
-            const srcOffset = ((start + row) * image.width) * 4
-            const dstOffset = row * image.width * 4
-            for (let i = 0; i < image.width * 4; i += 1) {
-              data[dstOffset + i] = image.data[srcOffset + i] ?? 0
+          if (h >= 8) {
+            const data = new Uint8ClampedArray(image.width * h * 4)
+            for (let row = 0; row < h; row += 1) {
+              const srcOffset = ((start + row) * image.width) * 4
+              const dstOffset = row * image.width * 4
+              for (let i = 0; i < image.width * 4; i += 1) {
+                data[dstOffset + i] = image.data[srcOffset + i] ?? 0
+              }
             }
+            lines.push({ width: image.width, height: h, data })
           }
-          lines.push({ width: image.width, height: h, data })
         }
         start = -1
         gapCount = 0
@@ -170,15 +224,17 @@ export function splitIntoLines(image: ImageLike, gapThreshold = 3): ImageLike[] 
   }
   if (start !== -1) {
     const h = image.height - start
-    const data = new Uint8ClampedArray(image.width * h * 4)
-    for (let row = 0; row < h; row += 1) {
-      const srcOffset = ((start + row) * image.width) * 4
-      const dstOffset = row * image.width * 4
-      for (let i = 0; i < image.width * 4; i += 1) {
-        data[dstOffset + i] = image.data[srcOffset + i] ?? 0
+    if (h >= 8) {
+      const data = new Uint8ClampedArray(image.width * h * 4)
+      for (let row = 0; row < h; row += 1) {
+        const srcOffset = ((start + row) * image.width) * 4
+        const dstOffset = row * image.width * 4
+        for (let i = 0; i < image.width * 4; i += 1) {
+          data[dstOffset + i] = image.data[srcOffset + i] ?? 0
+        }
       }
+      lines.push({ width: image.width, height: h, data })
     }
-    lines.push({ width: image.width, height: h, data })
   }
   return lines.length > 0 ? lines : [image]
 }

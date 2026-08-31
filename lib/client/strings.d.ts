@@ -34,6 +34,7 @@ export type MathInputStrings = {
     ocrTitle: string;
     ocrPasteHint: string;
     ocrUpload: string;
+    ocrWarning: string;
     editorTitle: string;
     editorInsert: string;
     previewTitle: string;

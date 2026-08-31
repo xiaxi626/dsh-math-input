@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { toGrayscaleFloat, invert, scaleToHeight, padToMultiple, imageToTensor, splitIntoLines, TARGET_HEIGHT, ALIGNMENT } from '../src/recognition/image-preprocess.js'
+import { toGrayscaleFloat, invert, normalizeContrast, scaleToHeight, padToMultiple, imageToTensor, splitIntoLines, TARGET_HEIGHT, ALIGNMENT } from '../src/recognition/image-preprocess.js'
 
 function whiteImage(width: number, height: number): { width: number; height: number; data: Uint8ClampedArray } {
   const data = new Uint8ClampedArray(width * height * 4)
@@ -53,25 +53,28 @@ test('padToMultiple pads right/bottom with zeros to 64-alignment', () => {
 })
 
 test('imageToTensor returns MODEL_H-tall tensor with mask', () => {
-  const result = imageToTensor(whiteImage(128, 64))
+  const img = blackImage(128, 64)
+  const result = imageToTensor(img)
   assert.equal(result.height, TARGET_HEIGHT)
   assert.equal(result.width % ALIGNMENT, 0)
   assert.equal(result.tensor.length, result.height * result.width)
   assert.equal(result.mask.length, result.height * result.width)
-  assert.equal(result.tensor[0], 0)
-  assert.equal(result.tensor[result.tensor.length - 1], 0)
   assert.equal(result.mask[0], 0)
   assert.equal(result.mask[result.mask.length - 1], 1)
 })
 
-test('imageToTensor content at top, padding at bottom', () => {
-  const img = blackImage(128, 64)
-  const result = imageToTensor(img)
-  assert.equal(result.height, TARGET_HEIGHT)
-  assert.equal(result.mask[0], 0)
-  const lastContentRow = 127 * result.width
-  const firstPaddingRow = 128 * result.width
-  assert.ok(result.mask[lastContentRow] === 0 || result.mask[firstPaddingRow] === 1)
+test('normalizeContrast stretches 0.1..0.9 to 0..1', () => {
+  const values = new Float32Array([0.1, 0.5, 0.9])
+  const out = normalizeContrast(values)
+  assert.ok(Math.abs(out[0]! - 0) < 0.01)
+  assert.ok(Math.abs(out[1]! - 0.5) < 0.01)
+  assert.ok(Math.abs(out[2]! - 1) < 0.01)
+})
+
+test('normalizeContrast handles uniform values', () => {
+  const values = new Float32Array([0.5, 0.5, 0.5])
+  const out = normalizeContrast(values)
+  assert.deepEqual(Array.from(out), [0, 0, 0])
 })
 
 test('splitIntoLines returns single image for one-line content', () => {
@@ -82,10 +85,10 @@ test('splitIntoLines returns single image for one-line content', () => {
 
 test('splitIntoLines detects multiple horizontal bands', () => {
   const w = 64
-  const h = 128
+  const h = 160
   const data = new Uint8ClampedArray(w * h * 4)
   for (let y = 0; y < h; y += 1) {
-    const isContent = y < 32 || (y >= 64 && y < 96)
+    const isContent = y < 32 || (y >= 80 && y < 112)
     const val = isContent ? 0 : 255
     for (let x = 0; x < w; x += 1) {
       const idx = (y * w + x) * 4

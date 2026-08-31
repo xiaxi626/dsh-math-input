@@ -26,6 +26,7 @@ export interface TensorInput {
 }
 export declare function toGrayscaleFloat(image: ImageLike): Float32Array;
 export declare function invert(values: Float32Array): Float32Array;
+export declare function normalizeContrast(values: Float32Array): Float32Array;
 export declare function scaleToHeight(values: Float32Array, width: number, height: number, targetHeight: number): GrayImage;
 export declare function padToMultiple(values: Float32Array, width: number, height: number, multiple: number): GrayImage;
 export declare function imageToTensor(image: ImageLike): TensorInput;

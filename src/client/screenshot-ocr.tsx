@@ -20,6 +20,7 @@ export function ScreenshotOcr({ t, settings, onClose, onInsert }: ScreenshotOcrP
   const [latex, setLatex] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [warning, setWarning] = useState('')
 
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
@@ -34,6 +35,7 @@ export function ScreenshotOcr({ t, settings, onClose, onInsert }: ScreenshotOcrP
   const recognizeFile = async (file: File) => {
     setBusy(true)
     setError('')
+    setWarning('')
     try {
       const bitmap = await createImageBitmap(file)
       const canvas = document.createElement('canvas')
@@ -47,18 +49,29 @@ export function ScreenshotOcr({ t, settings, onClose, onInsert }: ScreenshotOcrP
       const lines = splitIntoLines(image)
       const opts = recognizeOptionsFrom(settings)
       const recognized: string[] = []
+      let hasWarning = false
       for (const line of lines) {
         const input = imageToTensor(line)
         const results = await getSharedRecognizer().recognizeTensor(input, opts)
         const picked = pickValidLatex(results)
-        if (picked !== undefined) recognized.push(picked)
+        if (picked !== undefined) {
+          recognized.push(picked)
+        } else if (results[0]?.latex.trim() !== '') {
+          recognized.push(results[0]!.latex)
+          hasWarning = true
+        }
       }
       if (recognized.length === 0) {
         setError('No formula recognized')
       } else {
-        const combined = recognized.length === 1 ? recognized[0]! : recognized.join(' \\\\ ')
+        const combined = recognized.length === 1
+          ? recognized[0]!
+          : `\\begin{aligned}\n${recognized.map((r) => `  ${r} \\\\`).join('\n')}\n\\end{aligned}`
         setLatex(combined)
-        if (previewRef.current !== null) renderLatex(combined, previewRef.current)
+        if (previewRef.current !== null) {
+          try { renderLatex(combined, previewRef.current) } catch { /* invalid LaTeX — user can edit */ }
+        }
+        if (hasWarning) setWarning(t('ocrWarning'))
       }
       bitmap.close()
     } catch (err) {
@@ -80,8 +93,9 @@ export function ScreenshotOcr({ t, settings, onClose, onInsert }: ScreenshotOcrP
         }}
       />
       <div style={{ marginTop: 12, minHeight: 48 }} ref={previewRef} />
+      {warning !== '' ? <p style={{ color: 'var(--dsw-alias-state-warn-secondary, #f5a623)' }}>{warning}</p> : null}
       {error !== '' ? <p style={{ color: 'var(--dsw-alias-state-error-secondary, #e5484d)' }}>{error}</p> : null}
-      <textarea value={latex} onChange={(event) => setLatex(event.target.value)} rows={2} style={{ width: '100%', fontFamily: 'monospace' }} aria-label="latex source" />
+      <textarea value={latex} onChange={(event) => setLatex(event.target.value)} rows={3} style={{ width: '100%', fontFamily: 'monospace' }} aria-label="latex source" />
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
         <button type="button" onClick={onClose}>{t('padCancel')}</button>
         <button

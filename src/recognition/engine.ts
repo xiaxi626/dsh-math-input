@@ -49,7 +49,7 @@ export async function recognizeStrokes(
 ): Promise<string | undefined> {
   if (!isStrokeMeaningful(strokes)) return undefined
   const results = await recognizer.recognizeStrokes(strokes, options)
-  return pickValidLatex(results)
+  return pickValidLatex(results) ?? results[0]?.latex
 }
 
 let shared: MathRecognizer | undefined
