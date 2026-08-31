@@ -1,5 +1,6 @@
 import { isStrokeMeaningful, type Stroke } from './preprocess.js'
 import { isValidLatex, repairLatex } from '../latex/repair.js'
+import type { TensorInput } from './image-preprocess.js'
 import type { RecognitionMode, ExecutionProvider } from '../config.js'
 
 export interface RecognitionResult {
@@ -15,7 +16,7 @@ export interface RecognizeOptions {
 
 export interface MathRecognizer {
   recognizeStrokes(strokes: readonly Stroke[], options: RecognizeOptions): Promise<RecognitionResult[]>
-  recognizeTensor(tensor: Float32Array, width: number, height: number, options: RecognizeOptions): Promise<RecognitionResult[]>
+  recognizeTensor(input: TensorInput, options: RecognizeOptions): Promise<RecognitionResult[]>
   dispose(): void
 }
 
@@ -141,16 +142,8 @@ function createInkOnRecognizer(): MathRecognizer {
       return [{ latex: result.latex, score: 1 }]
     },
 
-    async recognizeTensor(tensor, width, height, options) {
+    async recognizeTensor(input: TensorInput, options: RecognizeOptions) {
       await ensureReady(options)
-      const input = {
-        tensor,
-        height,
-        width,
-        mask: new Uint8Array(width * height),
-        maskHeight: height,
-        maskWidth: width,
-      }
       const result = await engine!.recognize(input, vocab!, options.mode)
       return [{ latex: result.latex, score: 1 }]
     },

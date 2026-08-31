@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { Modal } from './ui/modal.jsx'
 import { renderLatex } from '../latex/render.js'
-import { imageToTensor } from '../recognition/image-preprocess.js'
+import { imageToTensor, splitIntoLines, type ImageLike } from '../recognition/image-preprocess.js'
 import { pickValidLatex, getSharedRecognizer, recognizeOptionsFrom } from '../recognition/engine.js'
 import type { MathInputSettings } from '../config.js'
 
@@ -43,14 +43,22 @@ export function ScreenshotOcr({ t, settings, onClose, onInsert }: ScreenshotOcrP
       if (context === null) throw new Error('canvas 2d context unavailable')
       context.drawImage(bitmap, 0, 0)
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
-      const tensor = imageToTensor({ width: imageData.width, height: imageData.height, data: imageData.data })
-      const results = await getSharedRecognizer().recognizeTensor(tensor.values, tensor.width, tensor.height, recognizeOptionsFrom(settings))
-      const picked = pickValidLatex(results)
-      if (picked === undefined) {
+      const image: ImageLike = { width: imageData.width, height: imageData.height, data: imageData.data }
+      const lines = splitIntoLines(image)
+      const opts = recognizeOptionsFrom(settings)
+      const recognized: string[] = []
+      for (const line of lines) {
+        const input = imageToTensor(line)
+        const results = await getSharedRecognizer().recognizeTensor(input, opts)
+        const picked = pickValidLatex(results)
+        if (picked !== undefined) recognized.push(picked)
+      }
+      if (recognized.length === 0) {
         setError('No formula recognized')
       } else {
-        setLatex(picked)
-        if (previewRef.current !== null) renderLatex(picked, previewRef.current)
+        const combined = recognized.length === 1 ? recognized[0]! : recognized.join(' \\\\ ')
+        setLatex(combined)
+        if (previewRef.current !== null) renderLatex(combined, previewRef.current)
       }
       bitmap.close()
     } catch (err) {

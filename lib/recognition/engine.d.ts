@@ -1,4 +1,5 @@
 import { type Stroke } from './preprocess.js';
+import type { TensorInput } from './image-preprocess.js';
 import type { RecognitionMode, ExecutionProvider } from '../config.js';
 export interface RecognitionResult {
     latex: string;
@@ -11,7 +12,7 @@ export interface RecognizeOptions {
 }
 export interface MathRecognizer {
     recognizeStrokes(strokes: readonly Stroke[], options: RecognizeOptions): Promise<RecognitionResult[]>;
-    recognizeTensor(tensor: Float32Array, width: number, height: number, options: RecognizeOptions): Promise<RecognitionResult[]>;
+    recognizeTensor(input: TensorInput, options: RecognizeOptions): Promise<RecognitionResult[]>;
     dispose(): void;
 }
 export declare function pickValidLatex(results: readonly RecognitionResult[]): string | undefined;
