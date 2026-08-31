@@ -50,7 +50,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "node --import tsx --test test/"
+    "test": "node --import tsx --test test/*.test.ts"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
