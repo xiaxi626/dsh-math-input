@@ -1,3 +1,5 @@
+import katex from 'katex'
+
 export type MathDelimiter = '\\[' | '$$'
 
 export interface MathBlock {
@@ -66,4 +68,15 @@ function findClosing(text: string, from: number, close: string): number {
     cursor = found + close.length
   }
   return -1
+}
+
+/** Render one LaTeX string into an element; returns false when unrenderable. */
+export function renderLatex(latex: string, element: HTMLElement): boolean {
+  try {
+    katex.render(latex, element, { throwOnError: false, displayMode: true })
+    return true
+  } catch {
+    element.textContent = latex
+    return false
+  }
 }
