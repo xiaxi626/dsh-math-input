@@ -28,6 +28,9 @@ export type MathInputStrings = {
     padCancel: string;
     padClear: string;
     padUndo: string;
+    padResultLabel: string;
+    padSourcePlaceholder: string;
+    padError: string;
     ocrTitle: string;
     ocrPasteHint: string;
     ocrUpload: string;

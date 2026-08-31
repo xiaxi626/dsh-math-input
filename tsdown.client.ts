@@ -30,7 +30,12 @@ export function clientBundle(id: string, entry: string): UserConfig {
     },
     outputOptions: {
       entryFileNames: 'client.js',
-      intro: 'var module = { exports: {} }; var exports = module.exports;',
+      // The browser DSH module loader wraps this bundle in a `require`-based
+      // factory and has no way to resolve separate chunk files emitted by
+      // rolldown's code splitting (e.g. `core-*.cjs`). Disable code splitting
+      // so every dynamic import is inlined into the single `client.js` output.
+      codeSplitting: false,
+      intro: 'var module = { exports: {} }; var exports = module.exports; var __origRequire = require; require = function(s) { if (s === "module") return { createRequire: function() { return __origRequire; } }; if (s === "url") return { pathToFileURL: function(p) { return { href: typeof p === "string" ? p : "", protocol: "file:" }; }, fileURLToPath: function(p) { return typeof p === "string" ? p : ""; } }; return __origRequire(s); }; var __filename = ""; var __dirname = ""; var process = { env: {} }; var Buffer = { concat: function(a){for(var t=0,i=0;i<a.length;i++)t+=a[i].length;var b=new Uint8Array(t),o=0;for(i=0;i<a.length;i++){b.set(a[i],o);o+=a[i].length;}return b;} };',
       banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, factory: (require) => {`,
       footer: 'return module.exports; } });'
     }

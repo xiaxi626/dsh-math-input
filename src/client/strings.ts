@@ -28,6 +28,9 @@ export type MathInputStrings = {
   padCancel: string
   padClear: string
   padUndo: string
+  padResultLabel: string
+  padSourcePlaceholder: string
+  padError: string
   ocrTitle: string
   ocrPasteHint: string
   ocrUpload: string
@@ -73,6 +76,9 @@ export const zh: MathInputStrings = {
   padCancel: '取消',
   padClear: '清空',
   padUndo: '撤销',
+  padResultLabel: '识别结果',
+  padSourcePlaceholder: 'LaTeX 源码',
+  padError: '识别失败',
   ocrTitle: '截图识别',
   ocrPasteHint: 'Ctrl+V 粘贴图片,或上传文件',
   ocrUpload: '上传文件',
@@ -110,6 +116,9 @@ export const en: MathInputStrings = {
   padCancel: 'Cancel',
   padClear: 'Clear',
   padUndo: 'Undo',
+  padResultLabel: 'Recognition result',
+  padSourcePlaceholder: 'LaTeX source',
+  padError: 'Recognition failed',
   ocrTitle: 'Screenshot OCR',
   ocrPasteHint: 'Paste with Ctrl+V, or upload a file',
   ocrUpload: 'Upload file',

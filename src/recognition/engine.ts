@@ -62,10 +62,34 @@ export function setSharedRecognizerForTests(recognizer: MathRecognizer | undefin
   shared = recognizer
 }
 
-const MODEL_BASE = 'https://github.com/kimseungdae/ink-on/releases/download/v0.1.0'
+const MODEL_BASE = 'https://cdn.jsdelivr.net/gh/kimseungdae/ink-on@v0.1.0/public/models/comer'
 const ENCODER_URL = `${MODEL_BASE}/encoder_int8.onnx`
 const DECODER_URL = `${MODEL_BASE}/decoder_int8.onnx`
 const VOCAB_URL = `${MODEL_BASE}/vocab.json`
+const WASM_PATH = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/'
+
+/**
+ * Lazily resolve the `ink-on/core` module exactly once and reuse the promise.
+ *
+ * The recognizer used to call `await import('ink-on/core')` on every single
+ * recognition pass — redundant work that also needlessly re-enters the module
+ * loader. Because the build inlines this dynamic import (codeSplitting: false)
+ * the inlined `Promise.resolve().then(...)` is cheap, but resolving it once is
+ * still cleaner and avoids any provider that might re-evaluate the namespace.
+ *
+ * We keep this as a cached *dynamic* import rather than a top-level static
+ * import deliberately: engine.ts is imported by the test suite (which only uses
+ * `pickValidLatex`), and a static import would eagerly pull `onnxruntime-web`
+ * into Node. Deferring the load keeps that heavyweight browser dependency out
+ * of code paths that never actually run recognition.
+ */
+type InkOnModule = typeof import('ink-on/core')
+let inkOnModulePromise: Promise<InkOnModule> | undefined
+
+function loadInkOn(): Promise<InkOnModule> {
+  if (inkOnModulePromise === undefined) inkOnModulePromise = import('ink-on/core')
+  return inkOnModulePromise
+}
 
 interface InkOnEngine {
   recognize(input: { tensor: Float32Array; height: number; width: number; mask: Uint8Array; maskHeight: number; maskWidth: number }, vocab: unknown, mode?: string): Promise<{ latex: string; tokenIds: number[]; totalMs: number }>
@@ -88,7 +112,9 @@ function createInkOnRecognizer(): MathRecognizer {
     if (engine !== undefined && vocab !== undefined) return
     if (initPromise !== undefined) { await initPromise; return }
     initPromise = (async () => {
-      const inkOn = await import('ink-on/core')
+      const ort = await import('onnxruntime-web')
+      ort.env.wasm.wasmPaths = WASM_PATH
+      const inkOn = await loadInkOn()
       const provider = options.provider === 'webgpu' && typeof navigator !== 'undefined' && 'gpu' in navigator
         ? 'webgpu'
         : 'wasm'
@@ -108,7 +134,7 @@ function createInkOnRecognizer(): MathRecognizer {
   return {
     async recognizeStrokes(strokes, options) {
       await ensureReady(options)
-      const inkOn = await import('ink-on/core')
+      const inkOn = await loadInkOn()
       const inkOnStrokes = strokes.map(s => ({ points: s.points, lineWidth: 2.5 }))
       const input = inkOn.preprocessStrokes(inkOnStrokes)
       const result = await engine!.recognize(input, vocab!, options.mode)
