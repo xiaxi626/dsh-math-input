@@ -1,31 +1,46 @@
-name: ci
+name: CI
 
 on:
   push:
+    branches: [master, main]
   pull_request:
 
 jobs:
   quality:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         node: [20, 22, 24]
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
-      - name: committed lib matches fresh build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify committed lib/ is up to date
         run: |
-          if [ -n "$(git status --porcelain lib)" ]; then
-            echo "::error::lib/ drifted from a fresh build"
-            git status --porcelain lib
+          if ! git diff --exit-code --quiet -- lib/; then
+            echo "::error::lib/ is out of date — run 'npm run build' and commit the result"
+            git diff --stat -- lib/
             exit 1
           fi
+          echo "lib/ is up to date"

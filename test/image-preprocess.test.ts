@@ -63,6 +63,21 @@ test('imageToTensor returns MODEL_H-tall tensor with mask', () => {
   assert.equal(result.mask[result.mask.length - 1], 1)
 })
 
+test('imageToTensor handles all-white (blank) image without throwing', () => {
+  const img = whiteImage(200, 100)
+  const result = imageToTensor(img)
+  assert.equal(result.height, TARGET_HEIGHT)
+  assert.ok(result.width >= ALIGNMENT)
+  assert.equal(result.tensor.length, result.height * result.width)
+  // Blank image → after invert all zeros → normalizeContrast returns zeros →
+  // trimWhitespace finds no content → scales blank → tensor should be all zeros
+  let nonZero = 0
+  for (let i = 0; i < result.tensor.length; i += 1) {
+    if (result.tensor[i]! > 0) nonZero += 1
+  }
+  assert.equal(nonZero, 0, 'blank image should produce all-zero tensor')
+})
+
 test('normalizeContrast stretches 0.1..0.9 to 0..1', () => {
   const values = new Float32Array([0.1, 0.5, 0.9])
   const out = normalizeContrast(values)
@@ -73,6 +88,12 @@ test('normalizeContrast stretches 0.1..0.9 to 0..1', () => {
 
 test('normalizeContrast handles uniform values', () => {
   const values = new Float32Array([0.5, 0.5, 0.5])
+  const out = normalizeContrast(values)
+  assert.deepEqual(Array.from(out), [0, 0, 0])
+})
+
+test('normalizeContrast handles all-white (uniform 1.0) input', () => {
+  const values = new Float32Array([1, 1, 1])
   const out = normalizeContrast(values)
   assert.deepEqual(Array.from(out), [0, 0, 0])
 })
@@ -102,4 +123,13 @@ test('splitIntoLines detects multiple horizontal bands', () => {
   assert.equal(lines.length, 2)
   assert.equal(lines[0]!.height, 32)
   assert.equal(lines[1]!.height, 32)
+})
+
+test('splitIntoLines returns original image for all-white (blank) input', () => {
+  const img = whiteImage(100, 50)
+  const lines = splitIntoLines(img)
+  // No ink detected → falls back to returning the original image as one line
+  assert.equal(lines.length, 1)
+  assert.equal(lines[0]!.width, img.width)
+  assert.equal(lines[0]!.height, img.height)
 })
