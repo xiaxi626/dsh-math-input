@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","names":[],"sources":["../src/index.ts"],"sourcesContent":["import type { Context } from '@deepseek-ai/cordis'\n\nexport const name = 'dsh-math-input'\n\nexport function apply(_ctx: Context): void {\n  // Settings service is mounted in Task 8.\n}\n"],"mappings":";AAEA,MAAa,OAAO;AAEpB,SAAgB,MAAM,MAAqB,CAE3C"}

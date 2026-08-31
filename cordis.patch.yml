@@ -1,0 +1,5 @@
+# The dsh-math-input bundle patch. Browser behavior is discovered through the
+# package's dsh.client manifest.
+- insert:
+    - id: dsh-math-input
+      name: dsh-math-input
