@@ -37,6 +37,12 @@ cat > overlay.yml <<EOF
 EOF
 ```
 
+> `pwd -W` 输出 Windows 风格路径（如 `C:/Users/xxx/dsh-math-input`）。
+> 必须加 `/` 前缀，结果是 `/C:/Users/xxx/dsh-math-input/lib/index.js`。
+> Node.js ESM 加载器不接受裸 `C:/...` 路径（会把 `C:` 当协议名）——
+> 必须写成 `/C:/...` 或 `file:///C:/...`。**不要**用 `pwd`（输出
+> `/c/Users/...`，加载器会解析成 `C:\c\Users\...`）。
+
 **macOS / Linux：**
 
 ```bash
@@ -46,6 +52,9 @@ cat > overlay.yml <<EOF
       name: '$(pwd)/lib/index.js'
 EOF
 ```
+
+> `pwd` 输出 Unix 风格路径（如 `/Users/xxx/dsh-math-input`），已以 `/` 开头——
+> 不需要额外前缀。
 
 用 overlay 补丁启动 DSH web 客户端：
 

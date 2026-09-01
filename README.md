@@ -144,7 +144,7 @@ cat > overlay.yml <<EOF
 EOF
 ```
 
-> `pwd -W` outputs a Windows-style absolute path (e.g. `C:/Users/xxx/dsh-math-input`). The leading `/` is required — the Node.js ESM loader on Windows does not accept bare `C:/...` paths (treated as `c:` protocol); must be `/C:/...` or `file:///C:/...`.
+> `pwd -W` outputs a Windows-style absolute path (e.g. `C:/Users/xxx/dsh-math-input`). The leading `/` is required — the Node.js ESM loader on Windows does not accept bare `C:/...` paths (treated as `C:` protocol); must be `/C:/...` or `file:///C:/...`. Do **not** use `pwd` (outputs `/c/Users/...` which resolves as `C:\c\Users\...`).
 
 **macOS / Linux:**
 

@@ -37,6 +37,12 @@ cat > overlay.yml <<EOF
 EOF
 ```
 
+> `pwd -W` outputs a Windows-style path (e.g. `C:/Users/xxx/dsh-math-input`).
+> You must prefix it with `/`, resulting in `/C:/Users/xxx/dsh-math-input/lib/index.js`.
+> Node.js ESM loader doesn't accept bare `C:/...` paths on Windows (treats `C:` as a
+> protocol) — it must be `/C:/...` or `file:///C:/...`. Do **not** use `pwd` (outputs
+> `/c/Users/...` which the loader resolves as `C:\c\Users\...`).
+
 **macOS / Linux:**
 
 ```bash
@@ -46,6 +52,9 @@ cat > overlay.yml <<EOF
       name: '$(pwd)/lib/index.js'
 EOF
 ```
+
+> `pwd` outputs a Unix-style path (e.g. `/Users/xxx/dsh-math-input`), which already
+> starts with `/` — no extra prefix needed.
 
 Launch the DSH web client with the overlay patch:
 

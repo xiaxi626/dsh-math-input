@@ -145,7 +145,7 @@ EOF
 ```
 
 > `pwd -W` 输出 Windows 风格绝对路径（如 `C:/Users/xxx/dsh-math-input`），前面必须加 `/`，拼接后得到 `/C:/Users/xxx/dsh-math-input/lib/index.js`。
-> Node.js ESM loader 在 Windows 上不认裸 `C:/...` 路径（会被当成 `c:` 协议），必须写成 `/C:/...` 或 `file:///C:/...`。
+> Node.js ESM loader 在 Windows 上不认裸 `C:/...` 路径（会被当成 `C:` 协议），必须写成 `/C:/...` 或 `file:///C:/...`。**不要**用 `pwd`（输出 `/c/Users/...`，会被解析成 `C:\c\Users\...`）。
 
 **macOS / Linux：**
 
