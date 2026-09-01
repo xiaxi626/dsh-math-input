@@ -4,8 +4,10 @@
 
 感谢你有兴趣贡献！本指南涵盖源码结构、本地开发和质量门禁。
 
-端到端测试（编译 → overlay → DSH → 验证）请看 README 的
-**[本地测试步骤](README_CN.md#本地测试步骤)**。
+本地测试（编译 → overlay → DSH → 验证）请看 README 的
+**[本地测试](README_CN.md#本地测试)**。
+插件装载验证（file: 本地源 → 冷启动 → UI 检查 → 清理）见
+**[插件装载验证](docs/verify-plugin-install.zh-CN.md)**。
 
 ## 项目结构
 
@@ -88,5 +90,6 @@ CI 的「Verify committed lib/ is up to date」步骤会自动检测漂移。
 
 - [架构 — 模块布局、识别管道、设置流程](docs/ARCHITECTURE.zh-CN.md)
 - [识别引擎 — 模型、预处理、缓存](docs/recognition-engine.md)
-- [本地测试指南 — overlay.yml 配置与 DSH 启动](docs/local-testing.md)
+- [本地测试指南 — overlay.yml 配置与 DSH 启动](docs/local-testing.zh-CN.md)
+- [插件装载验证 — file: 本地源安装 → 冷启动 → UI 检查 → 清理](docs/verify-plugin-install.zh-CN.md)
 - [更新日志](CHANGELOG.md)

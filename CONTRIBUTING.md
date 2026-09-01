@@ -4,8 +4,10 @@
 
 Thanks for your interest in contributing! This guide covers source structure, local development, and the quality gate.
 
-For end-to-end testing (build → overlay → DSH → verify), see
+For local testing (build → overlay → DSH → verify), see
 **[Local testing steps](README.md#local-testing)** in the README.
+For verifying the real plugin install path (file: source → cold boot → UI check → cleanup), see
+**[Plugin install verification](docs/verify-plugin-install.md)**.
 
 ## Project structure
 
@@ -81,4 +83,5 @@ The CI `Verify committed lib/ is up to date` step catches drift automatically.
 - [Architecture — module layout, recognition pipeline, settings flow](docs/ARCHITECTURE.md)
 - [Recognition engine — model, preprocessing, caching](docs/recognition-engine.md)
 - [Local testing guide — overlay.yml setup and DSH launch](docs/local-testing.md)
+- [Plugin install verification — file: source install → cold boot → UI check → cleanup](docs/verify-plugin-install.md)
 - [Changelog](CHANGELOG.md)

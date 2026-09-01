@@ -33,15 +33,15 @@ Our `cordis.patch.yml` is therefore minimal (identical shape to dsh-better-input
 
 ### Host runtime
 
-* Plugin entry exports `name` and `apply(ctx)` (function form). Dependencies declared in `inject` are ready before `apply` runs; everything registered through `ctx` is disposed automatically; explicit cleanup uses `ctx.effect(() => disposer)`.
+- Plugin entry exports `name` and `apply(ctx)` (function form). Dependencies declared in `inject` are ready before `apply` runs; everything registered through `ctx` is disposed automatically; explicit cleanup uses `ctx.effect(() => disposer)`.
 
-* The Host registers one service: `MathInputSettingsService extends TypertRemoteService` (from `@deepseek-ai/dsh-typert-protocol`), mounted via `await ctx.plugin(MathInputSettingsService)` and constructed as `super(ctx, 'MathInput', { namespace: 'mathInput' })`. Each public method of the service becomes a Remote invocation.
+- The Host registers one service: `MathInputSettingsService extends TypertRemoteService` (from `@deepseek-ai/dsh-typert-protocol`), mounted via `await ctx.plugin(MathInputSettingsService)` and constructed as `super(ctx, 'MathInput', { namespace: 'mathInput' })`. Each public method of the service becomes a Remote invocation.
 
-* Settings persist through `@deepseek-ai/dsh-settings`: `ctx.settings.register(settingsNamespace('dsh-math-input'), MathInputSettingsSchema, { validate })`, where the schema is a Schemastery object with per-field defaults. The Host owns validation (`validateSettings`) and the flat stored shape.
+- Settings persist through `@deepseek-ai/dsh-settings`: `ctx.settings.register(settingsNamespace('dsh-math-input'), MathInputSettingsSchema, { validate })`, where the schema is a Schemastery object with per-field defaults. The Host owns validation (`validateSettings`) and the flat stored shape.
 
-* Typert gateway boundary rules (from dsh-better-input's hard-won comments): never assign explicit `undefined` in a returned object — omit optional keys instead; cancellation arrives as a trailing `signal: AbortSignal` parameter declared in the descriptor.
+- Typert gateway boundary rules (from dsh-better-input's hard-won comments): never assign explicit `undefined` in a returned object — omit optional keys instead; cancellation arrives as a trailing `signal: AbortSignal` parameter declared in the descriptor.
 
-* No `ctx.llm` anywhere — zero token cost is architectural, not behavioral.
+- No `ctx.llm` anywhere — zero token cost is architectural, not behavioral.
 
 ### Typert / Remote contract
 
@@ -57,26 +57,26 @@ Descriptor shape per method: `id: 'dsh-math-input#mathInput/<method>'`, `service
 
 For this thin plugin the contract exposes only settings I/O:
 
-* `mathInput/getSettings() -> MathInputSettingsView`
+- `mathInput/getSettings() -> MathInputSettingsView`
 
-* `mathInput/updateSettings(patch, signal?) -> MathInputSettingsView`
+- `mathInput/updateSettings(patch, signal?) -> MathInputSettingsView`
 
 The Client mounts the contribution once with `await ctx.remote.$mount(TYPERT_REMOTE)` and calls `remote.getSettings()` etc., which resolve to `RemoteResult<T>` (`{ ok: true, value } | { ok: false, error }`).
 
 ### Client runtime
 
-* `package.json` declares `dsh.client: { platform: 'web', inject: [...] }` listing the framework packages whose factories must arrive before ours materialize (mirrors dsh-better-input): `@deepseek-ai/dsh-client-runtime`, `@deepseek-ai/dsh-client-ui-conversation`, `@deepseek-ai/dsh-client-ui-slots`. The client bundle is exported at `exports['./client']`.
+- `package.json` declares `dsh.client: { platform: 'web', inject: [...] }` listing the framework packages whose factories must arrive before ours materialize (mirrors dsh-better-input): `@deepseek-ai/dsh-client-runtime`, `@deepseek-ai/dsh-client-ui-conversation`, `@deepseek-ai/dsh-client-ui-slots`. The client bundle is exported at `exports['./client']`.
 
-* The client entry (`src/client.ts` → `src/client/index.ts`) exports `inject: ['slots', 'remote', 'locale']` and `async apply(ctx: ClientContext): Promise<() => Promise<void>>`:
+- The client entry (`src/client.ts` → `src/client/index.ts`) exports `inject: ['slots', 'remote', 'locale']` and `async apply(ctx: ClientContext): Promise<() => Promise<void>>`:
 
   1. `const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)` — mounts `remote.mathInput`.
   2. `ctx.locale.register(MATH_INPUT_NS, { zh, en })` — bilingual dictionary registered before any slot renders.
   3. `await ctx.inject(['slots', 'remote', 'remote.mathInput', 'locale'], async (remoteCtx) => { ... slot registrations ... })` — the inner inject requests `remote.mathInput` only after the mount (requesting it in the outer inject deadlocks, since it gates our own activation).
   4. Returns a dispose function that disposes the locale dictionaries and the remote mount.
 
-* Components are React 18 function components. They never receive `ctx`; everything arrives as props.
+- Components are React 18 function components. They never receive `ctx`; everything arrives as props.
 
-* CSS: inline styles keyed off DSH design tokens (`var(--dsw-alias-*)`); plugin keyframes injected via a `document.head` style tag carrying `dataset.plugin = 'dsh-math-input'`, removed on dispose.
+- CSS: inline styles keyed off DSH design tokens (`var(--dsw-alias-*)`); plugin keyframes injected via a `document.head` style tag carrying `dataset.plugin = 'dsh-math-input'`, removed on dispose.
 
 ### Slot map (verified against `docs/subsystems/slots.md` hierarchy)
 
@@ -179,15 +179,15 @@ The plugin uses [`ink-on`](https://www.npmjs.com/package/ink-on), a framework-ag
 
 The engine exposes:
 
-* `InferenceEngine` — loads ONNX sessions, runs encoder + decoder with beam search.
+- `InferenceEngine` — loads ONNX sessions, runs encoder + decoder with beam search.
 
-* `preprocessStrokes(strokes)` — resamples points at 3px intervals, renders Bezier curves on a white-on-black canvas, scales to height 256, converts to a grayscale Float32 tensor.
+- `preprocessStrokes(strokes)` — resamples points at 3px intervals, renders Bezier curves on a white-on-black canvas, scales to height 256, converts to a grayscale Float32 tensor.
 
-* `repairLatex(tokens)` — fixes unbalanced braces and broken `\frac`/`\sqrt` arguments, validated by KaTeX.
+- `repairLatex(tokens)` — fixes unbalanced braces and broken `\frac`/`\sqrt` arguments, validated by KaTeX.
 
-* `isStrokeMeaningful(strokes)` — filters accidental taps and dots.
+- `isStrokeMeaningful(strokes)` — filters accidental taps and dots.
 
-* `loadVocab(url)` — loads the 245-symbol token vocabulary.
+- `loadVocab(url)` — loads the 245-symbol token vocabulary.
 
 **Screenshot OCR reuse**: the same CoMER encoder accepts a preprocessed image tensor. A separate `image-preprocess.ts` converts a screenshot/pasted image to the same format (grayscale, inverted to white-on-black, scaled to height 256, 64px-aligned padding). This avoids shipping a second model. CoMER is trained on handwritten data (CROHME), so accuracy on printed formulas may be lower; if real-world testing shows insufficient results, a pix2tex ONNX export can be slotted in behind the same `recognize(input)` interface.
 
@@ -197,13 +197,13 @@ The engine exposes:
 
 Watches the composer draft for `\[` ... `\]` closure pairs.
 
-* State machine: `source` (editable text) <-> `rendered` (KaTeX block).
+- State machine: `source` (editable text) <-> `rendered` (KaTeX block).
 
-* Unclosed `\[` stays as plain text (no premature rendering).
+- Unclosed `\[` stays as plain text (no premature rendering).
 
-* On send: rendered blocks expand back to `\[latex\]` plain text so the model reads the LaTeX source.
+- On send: rendered blocks expand back to `\[latex\]` plain text so the model reads the LaTeX source.
 
-* The delimiter is `\[ ... \]` (pure LaTeX display math, no `$` ambiguity); `$$ ... $$` is detected too for pasted content, but plugin-produced output uses `\[...\]`.
+- The delimiter is `\[ ... \]` (pure LaTeX display math, no `$` ambiguity); `$$ ... $$` is detected too for pasted content, but plugin-produced output uses `\[...\]`.
 
 **Framework constraint (verified)**: the composer draft is a plain string exposed through `input.draft` / `inputActions.setDraft`; the shipped slot system provides no hook to replace a text range with a React node inside the composer. v1 therefore renders a **KaTeX preview strip** (our own `conversation.input.dock` occupant showing live-rendered blocks for every closed pair in the draft; click a block to edit its source) instead of mutating composer DOM. True in-place rendering requires probing the composer DOM structure — tracked in [Open Questions](#open-questions), to be investigated during implementation.
 
@@ -239,11 +239,11 @@ Image -> `image-preprocess` (grayscale, invert to white-on-black, scale to 256h,
 
 A `conversation.input.dock` occupant toggled by the launcher (collapsed by default; the dock slot keeps it co-present with the composer, same placement strategy as dsh-better-input's docks). Left: code editor area. Right: live KaTeX preview. Bottom: symbol palette modeled on the AxMath bottom toolbar.
 
-* Greek letter row: alpha, beta, gamma, delta, theta, lambda, mu, pi, sigma, phi, omega, etc.
+- Greek letter row: alpha, beta, gamma, delta, theta, lambda, mu, pi, sigma, phi, omega, etc.
 
-* Structure template row: `\frac{}{}`, `\sqrt{}`, `\sum_{}^{}`, `\int_{}^{}`, `x^{}`, `x_{}`, matrix templates.
+- Structure template row: `\frac{}{}`, `\sqrt{}`, `\sum_{}^{}`, `\int_{}^{}`, `x^{}`, `x_{}`, matrix templates.
 
-* Clicking a palette item inserts the corresponding LaTeX fragment at the cursor.
+- Clicking a palette item inserts the corresponding LaTeX fragment at the cursor.
 
 Confirm inserts `\[latex\]` into the draft via `setDraft`.
 
@@ -300,9 +300,9 @@ Two-phase build, mirroring dsh-better-input exactly:
 
 1. **`tsdown`** — two configs:
 
-   * Host: entries `{ index, typert, remote }` from `src/`, `format: 'esm'`, `platform: 'node'`, `target: 'es2022'`, sourcemaps.
+   - Host: entries `{ index, typert, remote }` from `src/`, `format: 'esm'`, `platform: 'node'`, `target: 'es2022'`, sourcemaps.
 
-   * Client: entry `{ client: 'src/client.ts' }`, `format: 'cjs'`, `platform: 'browser'`, with `outputOptions` `banner/footer` wrapping the bundle in `window.__ModuleLoader__.load({ id: 'dsh-math-input', factory: (require) => { ... return module.exports } })`. Externals (`react`, `react/jsx-runtime`, `react-dom`, `@deepseek-ai/cordis`, and the `@deepseek-ai/dsh-client-*` framework packages) are resolved by the DSH module loader's `require`; **everything else is bundled** — including `katex`, `onnxruntime-web`, and `ink-on`.
+   - Client: entry `{ client: 'src/client.ts' }`, `format: 'cjs'`, `platform: 'browser'`, with `outputOptions` `banner/footer` wrapping the bundle in `window.__ModuleLoader__.load({ id: 'dsh-math-input', factory: (require) => { ... return module.exports } })`. Externals (`react`, `react/jsx-runtime`, `react-dom`, `@deepseek-ai/cordis`, and the `@deepseek-ai/dsh-client-*` framework packages) are resolved by the DSH module loader's `require`; **everything else is bundled** — including `katex`, `onnxruntime-web`, and `ink-on`.
 2. **`tsc -p tsconfig.build.json`** — declaration-only emit into `lib/`.
 
 `lib/` is committed (same convention as dsh-skills-nexus / dsh-better-input); CI re-builds and fails on drift. `package.json` `exports` maps `.`, `./client`, `./typert`, `./remote`; `files` ships `lib/` + `cordis.patch.yml` + README/LICENSE.
@@ -383,13 +383,13 @@ To resolve during implementation (edge-work, per plan agreement):
 
 ## Compatibility
 
-* DeepSeek Harness `>= 0.1.1-rc.2` (Web profile); client packages developed against `@deepseek-ai/dsh-client-*` `0.1.0-rc.8` peer ranges (`>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`).
+- DeepSeek Harness `>= 0.1.1-rc.2` (Web profile); client packages developed against `@deepseek-ai/dsh-client-*` `0.1.0-rc.8` peer ranges (`>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`).
 
-* Node.js `>= 20.0.0` for building (harness itself targets 22.19+/24+).
+- Node.js `>= 20.0.0` for building (harness itself targets 22.19+/24+).
 
-* Chromium-based browser (Chrome / Edge) for ONNX WASM + WebGPU.
+- Chromium-based browser (Chrome / Edge) for ONNX WASM + WebGPU.
 
-* SharedArrayBuffer requires COOP/COEP headers for multi-threaded WASM (falls back to single-threaded without them).
+- SharedArrayBuffer requires COOP/COEP headers for multi-threaded WASM (falls back to single-threaded without them).
 
 ## License
 
@@ -397,17 +397,17 @@ The plugin code is licensed under **MIT**.
 
 Third-party dependencies and their licenses are documented in [THIRD\_PARTY\_NOTICES.md](../THIRD_PARTY_NOTICES.md). Summary:
 
-* **ink-on** (recognition engine): Apache-2.0 — permissive, compatible with MIT. Conditions: preserve copyright and license notices, state changes.
+- **ink-on** (recognition engine): Apache-2.0 — permissive, compatible with MIT. Conditions: preserve copyright and license notices, state changes.
 
-* **KaTeX** (LaTeX rendering): MIT.
+- **KaTeX** (LaTeX rendering): MIT.
 
-* **onnxruntime-web** (inference runtime): MIT.
+- **onnxruntime-web** (inference runtime): MIT.
 
-* **DSH / Cordis** (plugin framework): MIT.
+- **DSH / Cordis** (plugin framework): MIT.
 
-* **CoMER model weights** (downloaded at runtime, not bundled): no explicit license in the source repository. See THIRD\_PARTY\_NOTICES.md for provenance and risk assessment.
+- **CoMER model weights** (downloaded at runtime, not bundled): no explicit license in the source repository. See THIRD\_PARTY\_NOTICES.md for provenance and risk assessment.
 
-* **pix2tex** (optional screenshot OCR fallback): MIT.
+- **pix2tex** (optional screenshot OCR fallback): MIT.
 
 Avoid: **lia-canvas-ocr** (AGPL-3.0) — strong copyleft would force the entire plugin to GPL.
 
@@ -415,7 +415,7 @@ Avoid: **lia-canvas-ocr** (AGPL-3.0) — strong copyleft would force the entire 
 
 This document was verified against (2026-08-31):
 
-* `deepseek-ai/deepseek-harness` @ master: `docs/architecture.md`, `docs/development.md`, `docs/subsystems/slots.md`, `docs/subsystems/typert.md`, `docs/subsystems/web-client.md`, `docs/subsystems/client-modules.md`, `docs/user/develop/basic/{index,config}.md`.
+- `deepseek-ai/deepseek-harness` @ master: `docs/architecture.md`, `docs/development.md`, `docs/subsystems/slots.md`, `docs/subsystems/typert.md`, `docs/subsystems/web-client.md`, `docs/subsystems/client-modules.md`, `docs/user/develop/basic/{index,config}.md`.
 
-* `DIAG5/dsh-better-input` @ v0.1.8 (complete source): `package.json`, `cordis.patch.yml`, `src/index.ts`, `src/config.ts`, `src/config-schema.ts`, `src/remote-contract.ts`, `src/typert.ts`, `src/remote.ts`, `src/about.ts`, `src/polish/service.ts`, `src/client.ts`, `src/client/{index,settings,settings-controller,strings}.ts(x)`, `src/client/{MicrophoneButton,OptimizeButton,VoiceRecognitionBar,conversion-controller}.ts(x)`, `tsdown.config.ts`, `tsdown.client.ts`, `tsconfig{,.build}.json`.
+- `DIAG5/dsh-better-input` @ v0.1.8 (complete source): `package.json`, `cordis.patch.yml`, `src/index.ts`, `src/config.ts`, `src/config-schema.ts`, `src/remote-contract.ts`, `src/typert.ts`, `src/remote.ts`, `src/about.ts`, `src/polish/service.ts`, `src/client.ts`, `src/client/{index,settings,settings-controller,strings}.ts(x)`, `src/client/{MicrophoneButton,OptimizeButton,VoiceRecognitionBar,conversion-controller}.ts(x)`, `tsdown.config.ts`, `tsdown.client.ts`, `tsconfig{,.build}.json`.
 

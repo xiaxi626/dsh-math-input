@@ -35,7 +35,7 @@ dsh plugin --profile web add dsh-math-input
 dsh plugin --profile web add github:<owner>/dsh-math-input
 
 # without global dsh CLI
-npx -y @deepseek-ai/dsh plugin --profile web add dsh-math-input
+npx @deepseek-ai/dsh plugin --profile web add dsh-math-input
 ```
 
 **Restart the DSH profile** after install (stop and re-run `dsh web`). A "+" button appears to the left of the input row — that means the install succeeded.
@@ -93,7 +93,7 @@ Settings persist on the Host side and survive page reloads.
 dsh plugin --profile web remove dsh-math-input
 
 # or without global CLI
-npx -y @deepseek-ai/dsh plugin --profile web remove dsh-math-input
+npx @deepseek-ai/dsh plugin --profile web remove dsh-math-input
 ```
 
 Restart the DSH profile. The "+" button and all input windows will be removed.
@@ -164,12 +164,6 @@ npx @deepseek-ai/dsh web --patch overlay.yml
 
 Open `http://127.0.0.1:3080`.
 
-> If web profile deps are missing (never installed the DSH web profile), run first:
-> ```bash
-> npx -y @deepseek-ai/dsh plugin --profile web list
-> ```
-> Then retry the overlay command.
-
 ### Step 4: Verify functionality
 
 In the DSH web UI, check each item:
@@ -219,6 +213,7 @@ CI runs across Node 20 / 22 / 24: typecheck, lint, unit tests, build, and a chec
 - [Architecture (English)](./docs/ARCHITECTURE.md) | [架构 (中文)](./docs/ARCHITECTURE.zh-CN.md)
 - [Recognition engine selection](./docs/recognition-engine.md)
 - [Local testing guide](./docs/local-testing.md)
+- [Plugin install verification](./docs/verify-plugin-install.md)
 - [Contributing](./CONTRIBUTING.zh-CN.md)
 - [Changelog](./CHANGELOG.md)
 

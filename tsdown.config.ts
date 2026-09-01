@@ -1,6 +1,14 @@
 import { defineConfig } from 'tsdown'
 import { clientBundle } from './tsdown.client.ts'
 
+const HOST_EXTERNALS = [
+  '@deepseek-ai/cosmokit',
+  '@deepseek-ai/cordis',
+  '@deepseek-ai/dsh-typert-protocol',
+  '@deepseek-ai/dsh-settings',
+  '@deepseek-ai/schemastery'
+] as const
+
 export default defineConfig([
   {
     name: 'dsh-math-input',
@@ -16,7 +24,10 @@ export default defineConfig([
     dts: false,
     clean: true,
     sourcemap: true,
-    outExtensions: () => ({ js: '.js', dts: '.d.ts' })
+    outExtensions: () => ({ js: '.js', dts: '.d.ts' }),
+    deps: {
+      neverBundle: [...HOST_EXTERNALS]
+    }
   },
   clientBundle('dsh-math-input', 'src/client.ts')
 ])

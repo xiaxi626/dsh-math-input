@@ -33,15 +33,15 @@
 
 ### Host 运行时
 
-* 插件入口导出 `name` 与 `apply(ctx)`(函数形式)。`inject` 声明的依赖在 `apply` 运行前就绪;通过 `ctx` 注册的一切自动清理;显式清理用 `ctx.effect(() => disposer)`。
+- 插件入口导出 `name` 与 `apply(ctx)`(函数形式)。`inject` 声明的依赖在 `apply` 运行前就绪;通过 `ctx` 注册的一切自动清理;显式清理用 `ctx.effect(() => disposer)`。
 
-* Host 只注册一个服务:`MathInputSettingsService extends TypertRemoteService`(来自 `@deepseek-ai/dsh-typert-protocol`),经 `await ctx.plugin(MathInputSettingsService)` 挂载,构造为 `super(ctx, 'MathInput', { namespace: 'mathInput' })`。该服务的每个公开方法都会成为一个 Remote 调用。
+- Host 只注册一个服务:`MathInputSettingsService extends TypertRemoteService`(来自 `@deepseek-ai/dsh-typert-protocol`),经 `await ctx.plugin(MathInputSettingsService)` 挂载,构造为 `super(ctx, 'MathInput', { namespace: 'mathInput' })`。该服务的每个公开方法都会成为一个 Remote 调用。
 
-* 设置经 `@deepseek-ai/dsh-settings` 持久化:`ctx.settings.register(settingsNamespace('dsh-math-input'), MathInputSettingsSchema, { validate })`,schema 为带逐字段默认值的 Schemastery 对象。Host 负责校验(`validateSettings`)与扁平存储结构。
+- 设置经 `@deepseek-ai/dsh-settings` 持久化:`ctx.settings.register(settingsNamespace('dsh-math-input'), MathInputSettingsSchema, { validate })`,schema 为带逐字段默认值的 Schemastery 对象。Host 负责校验(`validateSettings`)与扁平存储结构。
 
-* Typert 网关边界规则(来自 dsh-better-input 的实战注释):返回对象中绝不显式赋值 `undefined`——可选键直接省略;取消信号作为描述符声明的尾部参数 `signal: AbortSignal` 传入。
+- Typert 网关边界规则(来自 dsh-better-input 的实战注释):返回对象中绝不显式赋值 `undefined`——可选键直接省略;取消信号作为描述符声明的尾部参数 `signal: AbortSignal` 传入。
 
-* 全程无 `ctx.llm`——零 token 是架构约束,不是行为约定。
+- 全程无 `ctx.llm`——零 token 是架构约束,不是行为约定。
 
 ### Typert / Remote 契约
 
@@ -57,26 +57,26 @@
 
 本薄插件的契约只暴露设置读写:
 
-* `mathInput/getSettings() -> MathInputSettingsView`
+- `mathInput/getSettings() -> MathInputSettingsView`
 
-* `mathInput/updateSettings(patch, signal?) -> MathInputSettingsView`
+- `mathInput/updateSettings(patch, signal?) -> MathInputSettingsView`
 
 Client 侧一次性挂载:`await ctx.remote.$mount(TYPERT_REMOTE)`,之后调用 `remote.getSettings()` 等,返回 `RemoteResult<T>`(`{ ok: true, value } | { ok: false, error }`)。
 
 ### 客户端运行时
 
-* `package.json` 声明 `dsh.client: { platform: 'web', inject: [...] }`,列出必须先于我们物化的框架包(与 dsh-better-input 一致):`@deepseek-ai/dsh-client-runtime`、`@deepseek-ai/dsh-client-ui-conversation`、`@deepseek-ai/dsh-client-ui-slots`。客户端 bundle 经 `exports['./client']` 导出。
+- `package.json` 声明 `dsh.client: { platform: 'web', inject: [...] }`,列出必须先于我们物化的框架包(与 dsh-better-input 一致):`@deepseek-ai/dsh-client-runtime`、`@deepseek-ai/dsh-client-ui-conversation`、`@deepseek-ai/dsh-client-ui-slots`。客户端 bundle 经 `exports['./client']` 导出。
 
-* 客户端入口(`src/client.ts` → `src/client/index.ts`)导出 `inject: ['slots', 'remote', 'locale']` 与 `async apply(ctx: ClientContext): Promise<() => Promise<void>>`:
+- 客户端入口(`src/client.ts` → `src/client/index.ts`)导出 `inject: ['slots', 'remote', 'locale']` 与 `async apply(ctx: ClientContext): Promise<() => Promise<void>>`:
 
   1. `const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)`——挂载 `remote.mathInput`。
   2. `ctx.locale.register(MATH_INPUT_NS, { zh, en })`——在任何插槽渲染前注册双语词典。
   3. `await ctx.inject(['slots', 'remote', 'remote.mathInput', 'locale'], async (remoteCtx) => { ...插槽注册... })`——内层 inject 在挂载之后才请求 `remote.mathInput`(在外层请求会死锁,因为它反过来门控我们自己的激活)。
   4. 返回销毁函数:清理语言词典与 remote 挂载。
 
-* 组件为 React 18 函数组件,从不接收 `ctx`,一切以 props 传入。
+- 组件为 React 18 函数组件,从不接收 `ctx`,一切以 props 传入。
 
-* CSS:内联样式基于 DSH 设计令牌(`var(--dsw-alias-*)`);插件关键帧经带 `dataset.plugin = 'dsh-math-input'` 的 `document.head` style 标签注入,销毁时移除。
+- CSS:内联样式基于 DSH 设计令牌(`var(--dsw-alias-*)`);插件关键帧经带 `dataset.plugin = 'dsh-math-input'` 的 `document.head` style 标签注入,销毁时移除。
 
 ### 插槽映射(对照 `docs/subsystems/slots.md` 官方插槽树核验)
 
@@ -179,15 +179,15 @@ dsh-math-input/
 
 引擎暴露的 API:
 
-* `InferenceEngine`——加载 ONNX 会话,运行编码器 + 解码器(beam search)。
+- `InferenceEngine`——加载 ONNX 会话,运行编码器 + 解码器(beam search)。
 
-* `preprocessStrokes(strokes)`——以 3px 间隔重采样点,在白底黑线画布上用贝塞尔曲线渲染,缩放至 256 高,转为灰度 Float32 张量。
+- `preprocessStrokes(strokes)`——以 3px 间隔重采样点,在白底黑线画布上用贝塞尔曲线渲染,缩放至 256 高,转为灰度 Float32 张量。
 
-* `repairLatex(tokens)`——修复不平衡的括号和损坏的 `\frac`/`\sqrt` 参数,经 KaTeX 校验。
+- `repairLatex(tokens)`——修复不平衡的括号和损坏的 `\frac`/`\sqrt` 参数,经 KaTeX 校验。
 
-* `isStrokeMeaningful(strokes)`——过滤误触和孤立点。
+- `isStrokeMeaningful(strokes)`——过滤误触和孤立点。
 
-* `loadVocab(url)`——加载 245 符号的词表。
+- `loadVocab(url)`——加载 245 符号的词表。
 
 **截图 OCR 复用**:同一 CoMER 编码器接受预处理后的图像张量。独立的 `image-preprocess.ts` 将截图/粘贴的图片转为相同格式(灰度、反色至白线黑底、缩放至 256 高、64px 对齐 padding),避免加载第二个模型。CoMER 训练于手写数据(CROHME),印刷体公式准确率可能偏低;若实测不足,可在同一 `recognize(input)` 接口后接入 pix2tex ONNX 导出。
 
@@ -197,13 +197,13 @@ dsh-math-input/
 
 监听输入框 draft 中 `\[` ... `\]` 的闭合对。
 
-* 状态机:`source`(可编辑文本) <-> `rendered`(KaTeX 渲染块)。
+- 状态机:`source`(可编辑文本) <-> `rendered`(KaTeX 渲染块)。
 
-* 未闭合的 `\[` 保持纯文本(不提前渲染)。
+- 未闭合的 `\[` 保持纯文本(不提前渲染)。
 
-* 发送时:渲染块展开回 `\[latex\]` 纯文本,让模型读到 LaTeX 源码。
+- 发送时:渲染块展开回 `\[latex\]` 纯文本,让模型读到 LaTeX 源码。
 
-* 分隔符为 `\[ ... \]`(纯 LaTeX 显示数学环境,无 `$` 歧义);也检测 `$$ ... $$` 以兼容粘贴内容,但插件产出的公式用 `\[...\]`。
+- 分隔符为 `\[ ... \]`(纯 LaTeX 显示数学环境,无 `$` 歧义);也检测 `$$ ... $$` 以兼容粘贴内容,但插件产出的公式用 `\[...\]`。
 
 **框架约束(已核验)**:输入框 draft 是经 `input.draft` / `inputActions.setDraft` 暴露的纯字符串;官方插槽系统不提供"把输入框内一段文本替换为 React 节点"的钩子。因此 v1 提供 **KaTeX 预览条**(我们自己的 `conversation.input.dock` 占用者,对 draft 中每个已闭合公式实时渲染成块;点击块可编辑其源码),而不去改动输入框 DOM。真正的原位渲染需要探测输入框 DOM 结构——见[开放问题](#开放问题),在实施期间边查边做。
 
@@ -239,11 +239,11 @@ portal 模态,支持三种取图方式:粘贴(Ctrl+V)、上传文件、浏览器
 
 `conversation.input.dock` 占用者,由启动器切换开合(默认收起;dock 插槽使其与输入框并存,与 dsh-better-input 的 dock 布局策略一致)。左侧代码编辑区,右侧 KaTeX 实时预览。底部符号面板参考 AxMath 底栏:
 
-* 希腊字母行:alpha、beta、gamma、delta、theta、lambda、mu、pi、sigma、phi、omega 等。
+- 希腊字母行:alpha、beta、gamma、delta、theta、lambda、mu、pi、sigma、phi、omega 等。
 
-* 结构模板行:`\frac{}{}`、`\sqrt{}`、`\sum_{}^{}`、`\int_{}^{}`、`x^{}`、`x_{}`、矩阵模板。
+- 结构模板行:`\frac{}{}`、`\sqrt{}`、`\sum_{}^{}`、`\int_{}^{}`、`x^{}`、`x_{}`、矩阵模板。
 
-* 点击面板项即在光标处插入对应 LaTeX 片段。
+- 点击面板项即在光标处插入对应 LaTeX 片段。
 
 确认后经 `setDraft` 把 `\[latex\]` 写入 draft。
 
@@ -300,9 +300,9 @@ Pointer Events -> Canvas Stroke[]
 
 1. **`tsdown`**——两套配置:
 
-   * Host:入口 `{ index, typert, remote }`(来自 `src/`),`format: 'esm'`、`platform: 'node'`、`target: 'es2022'`、sourcemap。
+   - Host:入口 `{ index, typert, remote }`(来自 `src/`),`format: 'esm'`、`platform: 'node'`、`target: 'es2022'`、sourcemap。
 
-   * Client:入口 `{ client: 'src/client.ts' }`,`format: 'cjs'`、`platform: 'browser'`,`outputOptions` 的 `banner/footer` 把 bundle 包进 `window.__ModuleLoader__.load({ id: 'dsh-math-input', factory: (require) => { ... return module.exports } })`。外部依赖(`react`、`react/jsx-runtime`、`react-dom`、`@deepseek-ai/cordis` 及各 `@deepseek-ai/dsh-client-*` 框架包)由 DSH 模块加载器的 `require` 解析;**其余全部打入**——包括 `katex`、`onnxruntime-web`、`ink-on`。
+   - Client:入口 `{ client: 'src/client.ts' }`,`format: 'cjs'`、`platform: 'browser'`,`outputOptions` 的 `banner/footer` 把 bundle 包进 `window.__ModuleLoader__.load({ id: 'dsh-math-input', factory: (require) => { ... return module.exports } })`。外部依赖(`react`、`react/jsx-runtime`、`react-dom`、`@deepseek-ai/cordis` 及各 `@deepseek-ai/dsh-client-*` 框架包)由 DSH 模块加载器的 `require` 解析;**其余全部打入**——包括 `katex`、`onnxruntime-web`、`ink-on`。
 2. **`tsc -p tsconfig.build.json`**——仅输出声明到 `lib/`。
 
 `lib/` 提交入库(与 dsh-skills-nexus / dsh-better-input 同一约定);CI 重新构建并校验无漂移。`package.json` `exports` 映射 `.`、`./client`、`./typert`、`./remote`;`files` 发布 `lib/` + `cordis.patch.yml` + README/LICENSE。
@@ -383,13 +383,13 @@ push 和 pull request 触发。矩阵跨 Node 20 / 22 / 24。运行:typecheck ->
 
 ## 兼容性
 
-* DeepSeek Harness `>= 0.1.1-rc.2`(Web profile);客户端包按 `@deepseek-ai/dsh-client-*` `0.1.0-rc.8` 的 peer 区间开发(`>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`)。
+- DeepSeek Harness `>= 0.1.1-rc.2`(Web profile);客户端包按 `@deepseek-ai/dsh-client-*` `0.1.0-rc.8` 的 peer 区间开发(`>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`)。
 
-* 构建需 Node.js `>= 20.0.0`(harness 本体面向 22.19+/24+)。
+- 构建需 Node.js `>= 20.0.0`(harness 本体面向 22.19+/24+)。
 
-* Chromium 内核浏览器(Chrome / Edge),用于 ONNX WASM + WebGPU。
+- Chromium 内核浏览器(Chrome / Edge),用于 ONNX WASM + WebGPU。
 
-* SharedArrayBuffer 需 COOP/COEP 头以启用多线程 WASM(无则回退单线程)。
+- SharedArrayBuffer 需 COOP/COEP 头以启用多线程 WASM(无则回退单线程)。
 
 ## 许可证
 
@@ -397,17 +397,17 @@ push 和 pull request 触发。矩阵跨 Node 20 / 22 / 24。运行:typecheck ->
 
 第三方依赖及其许可证详见 [THIRD\_PARTY\_NOTICES.md](../THIRD_PARTY_NOTICES.md)。摘要:
 
-* **ink-on**(识别引擎):Apache-2.0 — 宽松许可证,与 MIT 兼容。条件:保留版权与许可声明、标注修改。
+- **ink-on**(识别引擎):Apache-2.0 — 宽松许可证,与 MIT 兼容。条件:保留版权与许可声明、标注修改。
 
-* **KaTeX**(LaTeX 渲染):MIT。
+- **KaTeX**(LaTeX 渲染):MIT。
 
-* **onnxruntime-web**(推理运行时):MIT。
+- **onnxruntime-web**(推理运行时):MIT。
 
-* **DSH / Cordis**(插件框架):MIT。
+- **DSH / Cordis**(插件框架):MIT。
 
-* **CoMER 模型权重**(运行时下载,不打包):源仓库无显式许可证。见 THIRD\_PARTY\_NOTICES.md 的来源与风险评估。
+- **CoMER 模型权重**(运行时下载,不打包):源仓库无显式许可证。见 THIRD\_PARTY\_NOTICES.md 的来源与风险评估。
 
-* **pix2tex**(可选截图 OCR 备选):MIT。
+- **pix2tex**(可选截图 OCR 备选):MIT。
 
 避免使用:**lia-canvas-ocr**(AGPL-3.0) — 强 copyleft 会强制整个插件变为 GPL。
 
@@ -415,7 +415,7 @@ push 和 pull request 触发。矩阵跨 Node 20 / 22 / 24。运行:typecheck ->
 
 本文档已对照以下一手资料核验(2026-08-31):
 
-* `deepseek-ai/deepseek-harness` @ master:`docs/architecture.md`、`docs/development.md`、`docs/subsystems/slots.md`、`docs/subsystems/typert.md`、`docs/subsystems/web-client.md`、`docs/subsystems/client-modules.md`、`docs/user/develop/basic/{index,config}.md`。
+- `deepseek-ai/deepseek-harness` @ master:`docs/architecture.md`、`docs/development.md`、`docs/subsystems/slots.md`、`docs/subsystems/typert.md`、`docs/subsystems/web-client.md`、`docs/subsystems/client-modules.md`、`docs/user/develop/basic/{index,config}.md`。
 
-* `DIAG5/dsh-better-input` @ v0.1.8(完整源码):`package.json`、`cordis.patch.yml`、`src/index.ts`、`src/config.ts`、`src/config-schema.ts`、`src/remote-contract.ts`、`src/typert.ts`、`src/remote.ts`、`src/about.ts`、`src/polish/service.ts`、`src/client.ts`、`src/client/{index,settings,settings-controller,strings}.ts(x)`、`src/client/{MicrophoneButton,OptimizeButton,VoiceRecognitionBar,conversion-controller}.ts(x)`、`tsdown.config.ts`、`tsdown.client.ts`、`tsconfig{,.build}.json`。
+- `DIAG5/dsh-better-input` @ v0.1.8(完整源码):`package.json`、`cordis.patch.yml`、`src/index.ts`、`src/config.ts`、`src/config-schema.ts`、`src/remote-contract.ts`、`src/typert.ts`、`src/remote.ts`、`src/about.ts`、`src/polish/service.ts`、`src/client.ts`、`src/client/{index,settings,settings-controller,strings}.ts(x)`、`src/client/{MicrophoneButton,OptimizeButton,VoiceRecognitionBar,conversion-controller}.ts(x)`、`tsdown.config.ts`、`tsdown.client.ts`、`tsconfig{,.build}.json`。
 

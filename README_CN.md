@@ -35,7 +35,7 @@ dsh plugin --profile web add dsh-math-input
 dsh plugin --profile web add github:<owner>/dsh-math-input
 
 # 无全局 dsh CLI 时
-npx -y @deepseek-ai/dsh plugin --profile web add dsh-math-input
+npx @deepseek-ai/dsh plugin --profile web add dsh-math-input
 ```
 
 安装后**重启 DSH profile**（停掉再重新 `dsh web`）。输入框左侧出现 "+" 按钮即表示安装成功。
@@ -93,7 +93,7 @@ npx -y @deepseek-ai/dsh plugin --profile web add dsh-math-input
 dsh plugin --profile web remove dsh-math-input
 
 # 或无全局 CLI 时
-npx -y @deepseek-ai/dsh plugin --profile web remove dsh-math-input
+npx @deepseek-ai/dsh plugin --profile web remove dsh-math-input
 ```
 
 重启 DSH profile。"+" 按钮和所有输入窗口都会被移除。
@@ -165,12 +165,6 @@ npx @deepseek-ai/dsh web --patch overlay.yml
 
 打开 `http://127.0.0.1:3080`。
 
-> 如果 web profile 依赖缺失（从未安装过 DSH web profile），先运行：
-> ```bash
-> npx -y @deepseek-ai/dsh plugin --profile web list
-> ```
-> 然后重试上面的 overlay 命令。
-
 ### 第四步：验证功能
 
 在 DSH Web 界面中依次验证：
@@ -219,7 +213,8 @@ CI 跨 Node 20 / 22 / 24 运行：typecheck、lint、单元测试、build，并�
 
 - [架构（英文）](./docs/ARCHITECTURE.md) | [架构（中文）](./docs/ARCHITECTURE.zh-CN.md)
 - [识别引擎选型](./docs/recognition-engine.md)
-- [本地测试指南](./docs/local-testing.md)
+- [本地测试指南](./docs/local-testing.zh-CN.md)
+- [插件装载验证](./docs/verify-plugin-install.zh-CN.md)
 - [贡献指南](./CONTRIBUTING.zh-CN.md)
 - [更新日志](./CHANGELOG.md)
 

@@ -1,8 +1,11 @@
 # Local Testing
 
+**English** | [中文](./local-testing.zh-CN.md)
+
 ## Prerequisites
 
 - Node.js >= 20
+
 - Chrome or Edge (for WebGPU support and SharedArrayBuffer)
 
 ## Install
@@ -14,29 +17,43 @@ npm run build
 
 ## Overlay Smoke Test
 
-Create `overlay.yml` in the project root:
+Create `overlay.yml` in the project root (replace the path with your own):
 
 ```yaml
 - insert:
     - id: dsh-math-input
-      name: 'C:/Users/asswsw/Downloads/dsh-math-input/lib/index.js'
+      name: '/your/absolute/path/dsh-math-input/lib/index.js'
+```
+
+**Or generate it with a command** (from the project root):
+
+**Windows (Git Bash / MINGW):**
+
+```bash
+cat > overlay.yml <<EOF
+- insert:
+    - id: dsh-math-input
+      name: '/$(pwd -W)/lib/index.js'
+EOF
+```
+
+**macOS / Linux:**
+
+```bash
+cat > overlay.yml <<EOF
+- insert:
+    - id: dsh-math-input
+      name: '$(pwd)/lib/index.js'
+EOF
 ```
 
 Launch the DSH web client with the overlay patch:
 
 ```bash
-npx -y @deepseek-ai/dsh web --patch overlay.yml
+npx @deepseek-ai/dsh web --patch overlay.yml
 ```
 
 Open `http://127.0.0.1:3080`.
-
-If the web profile deps are missing (the DSH web profile was never installed), run:
-
-```bash
-npx -y @deepseek-ai/dsh plugin --profile web list
-```
-
-Then retry the overlay command.
 
 ## Verification Checklist
 
@@ -51,7 +68,12 @@ Then retry the overlay command.
 ## Troubleshooting
 
 - **Absolute path required**: the `name` field in `overlay.yml` must be an absolute path to `lib/index.js`
-- **Profile initialization**: if `dsh web` fails to start, run `npx -y @deepseek-ai/dsh plugin --profile web list` first
+
+- **Profile initialization**: the first `dsh web` run auto-initializes the web profile; for an existing profile that fails to resolve a bundle, run `npx @deepseek-ai/dsh plugin --profile web install`
+
 - **SharedArrayBuffer fallback**: if the server does not send `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers, ONNX Runtime falls back to single-threaded WASM — recognition still works but is slower
-- **Model download**: first recognition triggers a ~7.2 MB download (encoder + decoder + vocab); subsequent loads use IndexedDB cache
+
+- **Model download**: first recognition triggers a \~7.2 MB download (encoder + decoder + vocab); subsequent loads use IndexedDB cache
+
 - **WebGPU**: `provider: 'webgpu'` auto-detects and falls back to `wasm` on unsupported browsers
+
