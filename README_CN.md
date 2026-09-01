@@ -28,9 +28,6 @@ DSH 的输入框是纯文本。想让模型推理一个公式，你得手敲 LaT
 ### 安装插件
 
 ```bash
-# 从 npm 安装（推荐）
-dsh plugin --profile web add dsh-math-input
-
 # 从 GitHub 安装
 dsh plugin --profile web add github:<owner>/dsh-math-input
 
@@ -39,6 +36,20 @@ npx @deepseek-ai/dsh plugin --profile web add dsh-math-input
 ```
 
 安装后**重启 DSH profile**（停掉再重新 `dsh web`）。输入框左侧出现 "+" 按钮即表示安装成功。
+
+## 卸载
+
+```bash
+# 从 DSH profile 中卸载插件
+dsh plugin --profile web remove dsh-math-input
+
+# 或无全局 CLI 时
+npx @deepseek-ai/dsh plugin --profile web remove dsh-math-input
+```
+
+重启 DSH profile。"+" 按钮和所有输入窗口都会被移除。
+
+> 模型缓存（IndexedDB 中的 `math-handwrite-models` 数据库）不会被自动清除。如需手动清理，在浏览器 DevTools → Application → IndexedDB 中删除该数据库即可。
 
 ## 使用
 
@@ -86,20 +97,6 @@ npx @deepseek-ai/dsh plugin --profile web add dsh-math-input
 
 设置持久化在 Host 端，跨页面刷新保留。
 
-## 卸载
-
-```bash
-# 从 DSH profile 中卸载插件
-dsh plugin --profile web remove dsh-math-input
-
-# 或无全局 CLI 时
-npx @deepseek-ai/dsh plugin --profile web remove dsh-math-input
-```
-
-重启 DSH profile。"+" 按钮和所有输入窗口都会被移除。
-
-> 模型缓存（IndexedDB 中的 `math-handwrite-models` 数据库）不会被自动清除。如需手动清理，在浏览器 DevTools → Application → IndexedDB 中删除该数据库即可。
-
 ## 本地测试
 
 不需要推 GitHub、不需要发 npm，按以下五步在本机完整验证。
@@ -116,54 +113,40 @@ npm run build      # 生成 lib/ 目录
 
 > 如果改了代码想先确认类型无误再编译，可以跑 `npm run typecheck`（只检查类型，不生成产物）。
 
-### 第二步：创建本地 overlay
+### 第二步：链接本地包
 
-在项目根目录下新建 `overlay.yml`（注意：**不要提交到 git**，它是本地开发专用的）：
-
-```yaml
-# overlay.yml
-- insert:
-    - id: dsh-math-input
-      # Windows: '/C:/你的路径/dsh-math-input/lib/index.js'
-      # macOS:   '/Users/你的路径/dsh-math-input/lib/index.js'
-      # Linux:   '/home/你的路径/dsh-math-input/lib/index.js'
-      name: '/你的/绝对/路径/dsh-math-input/lib/index.js'
-```
-
-> `name` 填 `lib/index.js` 的**绝对路径**。Windows 必须在盘符前加 `/`，例如 `'/C:/dev/dsh-math-input/lib/index.js'`；macOS / Linux 直接用绝对路径，例如 `'/home/user/dsh-math-input/lib/index.js'`。
-
-**也可以用命令一键生成**（确保已 cd 到项目目录）：
+本插件同时有 Host 入口和 Client bundle（`package.json` 的 `dsh.client`）。
+Client 通过 `node_modules` 发现，所以必须先把包链接进去——只用 overlay
+不会加载 UI。
 
 **Windows (Git Bash / MINGW)：**
 
 ```bash
-cat > overlay.yml <<EOF
-- insert:
-    - id: dsh-math-input
-      name: '/$(pwd -W)/lib/index.js'
-EOF
+PROJECT="$(cygpath -m ~/Downloads/dsh-math-input)"   # ← 你的路径
+npx @deepseek-ai/dsh plugin --profile web add "file:$PROJECT"
 ```
-
-> `pwd -W` 输出 Windows 风格绝对路径（如 `C:/Users/xxx/dsh-math-input`），前面必须加 `/`，拼接后得到 `/C:/Users/xxx/dsh-math-input/lib/index.js`。
-> Node.js ESM loader 在 Windows 上不认裸 `C:/...` 路径（会被当成 `C:` 协议），必须写成 `/C:/...` 或 `file:///C:/...`。**不要**用 `pwd`（输出 `/c/Users/...`，会被解析成 `C:\c\Users\...`）。
 
 **macOS / Linux：**
 
 ```bash
-cat > overlay.yml <<EOF
-- insert:
-    - id: dsh-math-input
-      name: '$(pwd)/lib/index.js'
-EOF
+PROJECT="$(pwd)"                       # ← 从仓库根目录运行
+npx @deepseek-ai/dsh plugin --profile web add "file:$PROJECT"
 ```
 
-### 第三步：用 patch 模式启动 DSH
+这会在 profile 的 `node_modules` 中创建持久链接。之后每次改完代码只需
+`npm run build` 重启即可——**不需要重新安装**。
+
+### 第三步：启动 DSH
 
 ```bash
-npx @deepseek-ai/dsh web --patch overlay.yml
+npx @deepseek-ai/dsh web --no-open
 ```
 
 打开 `http://127.0.0.1:3080`。
+
+> **仅测试 Host（不链接）**：如果只需要测试 Host 端代码（设置服务、
+> typert 清单）而不需要 Client UI，可以用 overlay 补丁代替。详见
+> [本地测试指南](docs/local-testing.zh-CN.md#overlay-备选方案仅-host)。
 
 ### 第四步：验证功能
 
@@ -186,7 +169,7 @@ npx @deepseek-ai/dsh web --patch overlay.yml
 npm run build
 
 # 停掉 DSH（Ctrl+C），重新启动
-npx @deepseek-ai/dsh web --patch overlay.yml
+npx @deepseek-ai/dsh web --no-open
 ```
 
 ## 注意事项与限制

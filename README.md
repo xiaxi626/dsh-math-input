@@ -28,9 +28,6 @@ All recognition runs via ONNX Runtime Web (WASM / WebGPU). The model is 7.2 MB, 
 ### Install the plugin
 
 ```bash
-# from npm (recommended)
-dsh plugin --profile web add dsh-math-input
-
 # from GitHub
 dsh plugin --profile web add github:<owner>/dsh-math-input
 
@@ -39,6 +36,20 @@ npx @deepseek-ai/dsh plugin --profile web add dsh-math-input
 ```
 
 **Restart the DSH profile** after install (stop and re-run `dsh web`). A "+" button appears to the left of the input row — that means the install succeeded.
+
+## Uninstall
+
+```bash
+# remove from DSH profile
+dsh plugin --profile web remove dsh-math-input
+
+# or without global CLI
+npx @deepseek-ai/dsh plugin --profile web remove dsh-math-input
+```
+
+Restart the DSH profile. The "+" button and all input windows will be removed.
+
+> The model cache (IndexedDB database `math-handwrite-models`) is not automatically cleared. To clean it up manually, go to browser DevTools → Application → IndexedDB and delete the database.
 
 ## Usage
 
@@ -86,20 +97,6 @@ Open **Settings → Math Input** to configure:
 
 Settings persist on the Host side and survive page reloads.
 
-## Uninstall
-
-```bash
-# remove from DSH profile
-dsh plugin --profile web remove dsh-math-input
-
-# or without global CLI
-npx @deepseek-ai/dsh plugin --profile web remove dsh-math-input
-```
-
-Restart the DSH profile. The "+" button and all input windows will be removed.
-
-> The model cache (IndexedDB database `math-handwrite-models`) is not automatically cleared. To clean it up manually, go to browser DevTools → Application → IndexedDB and delete the database.
-
 ## Local testing
 
 No need to push to GitHub or publish to npm — follow these five steps to verify locally.
@@ -116,53 +113,41 @@ npm run build      # generates lib/ directory
 
 > To check types without building, run `npm run typecheck` (tsc only, no output).
 
-### Step 2: Create a local overlay
+### Step 2: Link the local package
 
-Create `overlay.yml` in the project root (**do not commit** — it's for local dev only):
-
-```yaml
-# overlay.yml
-- insert:
-    - id: dsh-math-input
-      # Windows: '/C:/your/path/dsh-math-input/lib/index.js'
-      # macOS:   '/Users/your/path/dsh-math-input/lib/index.js'
-      # Linux:   '/home/your/path/dsh-math-input/lib/index.js'
-      name: '/your/absolute/path/dsh-math-input/lib/index.js'
-```
-
-> `name` must be the **absolute path** to `lib/index.js`. On Windows, prefix the drive letter with `/`, e.g. `'/C:/dev/dsh-math-input/lib/index.js'`; on macOS / Linux, use a standard absolute path like `'/home/user/dsh-math-input/lib/index.js'`.
-
-**Or generate it with a command** (make sure you're in the project directory):
+This plugin has both a Host entry and a Client bundle (`dsh.client` in
+`package.json`). The Client is discovered through `node_modules`, so the
+package must be linked first — an overlay alone won't load the UI.
 
 **Windows (Git Bash / MINGW):**
 
 ```bash
-cat > overlay.yml <<EOF
-- insert:
-    - id: dsh-math-input
-      name: '/$(pwd -W)/lib/index.js'
-EOF
+PROJECT="$(cygpath -m ~/Downloads/dsh-math-input)"   # ← your path
+npx @deepseek-ai/dsh plugin --profile web add "file:$PROJECT"
 ```
-
-> `pwd -W` outputs a Windows-style absolute path (e.g. `C:/Users/xxx/dsh-math-input`). The leading `/` is required — the Node.js ESM loader on Windows does not accept bare `C:/...` paths (treated as `C:` protocol); must be `/C:/...` or `file:///C:/...`. Do **not** use `pwd` (outputs `/c/Users/...` which resolves as `C:\c\Users\...`).
 
 **macOS / Linux:**
 
 ```bash
-cat > overlay.yml <<EOF
-- insert:
-    - id: dsh-math-input
-      name: '$(pwd)/lib/index.js'
-EOF
+PROJECT="$(pwd)"          # ← run from the repo root
+npx @deepseek-ai/dsh plugin --profile web add "file:$PROJECT"
 ```
 
-### Step 3: Launch DSH with patch mode
+This creates a persistent link in the profile's `node_modules`. After code
+changes, just `npm run build` and restart — **no reinstall needed**.
+
+### Step 3: Launch DSH
 
 ```bash
-npx @deepseek-ai/dsh web --patch overlay.yml
+npx @deepseek-ai/dsh web --no-open
 ```
 
 Open `http://127.0.0.1:3080`.
+
+> **Host-only testing without linking**: if you only need to test Host-side code
+> (settings, typert manifest) without the Client UI, use an overlay patch instead.
+> See [Local testing guide](docs/local-testing.md#overlay-alternative-host-only)
+> for details.
 
 ### Step 4: Verify functionality
 
@@ -185,7 +170,7 @@ After modifying code:
 npm run build
 
 # stop DSH (Ctrl+C), restart
-npx @deepseek-ai/dsh web --patch overlay.yml
+npx @deepseek-ai/dsh web --no-open
 ```
 
 ## Notes & limitations
