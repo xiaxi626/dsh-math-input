@@ -24,6 +24,9 @@ yarn-error.log*
 *.swo
 *~
 
+# Source maps (generated locally, not committed — avoids cross-platform CRLF/LF diff)
+*.js.map
+
 # OS
 .DS_Store
 Thumbs.db
